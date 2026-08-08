@@ -87,6 +87,7 @@ function handleFileUpload(event) {
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
+            console.log('Excel parsed, rows:', jsonData.length);
             processExcelData(jsonData);
             showStatus(`✅ Successfully loaded: ${file.name}`, 'success');
         } catch (error) {
@@ -99,112 +100,129 @@ function handleFileUpload(event) {
 }
 
 // ============================================
-// PROCESS EXCEL DATA
+// PROCESS EXCEL DATA - FIXED VERSION
 // ============================================
 function processExcelData(rows) {
-    // Find the header row (contains dates)
-    let headerRowIndex = -1;
+    console.log('Processing Excel data...', rows.length, 'rows');
+    
+    // STEP 1: Find dates (first row with dates)
+    let dates = [];
+    let dateRowIndex = -1;
     let employeeStartIndex = -1;
     let employeeEndIndex = -1;
-
+    let nameColumnIndex = 0;
+    
+    // First, find the row with dates (look for date pattern)
+    for (let i = 0; i < Math.min(rows.length, 10); i++) {
+        const row = rows[i];
+        if (!row) continue;
+        
+        // Check if this row has dates (look for cells with date format)
+        let dateCount = 0;
+        for (let j = 1; j < row.length && j < 35; j++) {
+            const cell = String(row[j] || '');
+            // Check for date pattern like 01-08-2026 or 01/08/2026
+            if (cell.match(/\d{2}[-/]\d{2}[-/]\d{4}/)) {
+                dateCount++;
+            }
+        }
+        
+        if (dateCount > 10) { // Found a row with many dates
+            dateRowIndex = i;
+            dates = [];
+            for (let j = 1; j < row.length && j < 35; j++) {
+                const cell = String(row[j] || '').trim();
+                if (cell.match(/\d{2}[-/]\d{2}[-/]\d{4}/)) {
+                    dates.push(cell);
+                }
+            }
+            console.log('Found dates:', dates.length, 'dates');
+            break;
+        }
+    }
+    
+    // If no dates found, look for the row with "Name" or employee names
+    if (dates.length === 0) {
+        for (let i = 0; i < Math.min(rows.length, 15); i++) {
+            const row = rows[i];
+            if (!row) continue;
+            const firstCell = String(row[0] || '').toLowerCase();
+            if (firstCell.includes('name') || firstCell.includes('employee')) {
+                dateRowIndex = i + 1;
+                // Get dates from next row
+                if (i + 1 < rows.length) {
+                    const nextRow = rows[i + 1];
+                    for (let j = 1; j < nextRow.length && j < 35; j++) {
+                        const cell = String(nextRow[j] || '').trim();
+                        if (cell.match(/\d{2}[-/]\d{2}[-/]\d{4}/)) {
+                            dates.push(cell);
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
+    
+    // STEP 2: Find employee data
+    // Look for rows with employee names
+    const employeeNames = [
+        'Manogna.Kandukuri', 'Kunj.Trivedi', 'Devansh Singhai',
+        'Arjun.Chilkuri', 'Gopi.Nagendra', 'Akash1.Kamble',
+        'Ashwin.Rajesh', 'Himanshu1.Chaudhari', 'Onkar1 Kulkarni'
+    ];
+    
+    const employeeData = {};
+    
+    // Scan all rows for employee names
     for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         if (!row || row.length === 0) continue;
         
-        // Check if row contains dates (look for date pattern in first few cells)
-        const firstCell = String(row[0] || '');
-        if (firstCell.includes('SHIFT ROSTER') || firstCell.includes('Roster')) {
-            headerRowIndex = i;
-            continue;
-        }
+        const firstCell = String(row[0] || '').trim();
+        if (!firstCell) continue;
         
-        // Check if row has employee names (starts with name pattern)
-        if (row[0] && typeof row[0] === 'string' && !row[0].includes('Totals') && !row[0].includes('Shift')) {
-            // Check if this is an employee row
-            const isEmployee = EMPLOYEES.some(name => row[0].trim().includes(name.trim()));
-            if (isEmployee) {
-                if (employeeStartIndex === -1) employeeStartIndex = i;
-                employeeEndIndex = i;
+        // Check if this row contains an employee name
+        let matchedName = null;
+        for (const emp of employeeNames) {
+            // Try exact match or partial match
+            const empClean = emp.replace('1', '').trim();
+            if (firstCell.includes(empClean) || firstCell.includes(emp.split('.')[0])) {
+                matchedName = emp;
+                break;
             }
         }
-    }
-
-    // If we didn't find employees via exact match, try to find them
-    if (employeeStartIndex === -1) {
-        // Look for rows with employee names in first column
-        for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
-            if (!row || row.length === 0) continue;
-            const firstCell = String(row[0] || '');
-            if (EMPLOYEES.some(name => firstCell.includes(name.replace('1', '').trim()))) {
-                if (employeeStartIndex === -1) employeeStartIndex = i;
-                employeeEndIndex = i;
-            }
-        }
-    }
-
-    // Extract headers (dates)
-    const headerRow = rows[headerRowIndex + 1] || rows[headerRowIndex + 2];
-    const dates = [];
-    if (headerRow) {
-        for (let i = 1; i < headerRow.length; i++) {
-            if (headerRow[i] && typeof headerRow[i] === 'string' && headerRow[i].includes('-')) {
-                dates.push(headerRow[i]);
-            }
-        }
-    }
-
-    // Extract employee data
-    const employeeData = {};
-    const start = employeeStartIndex;
-    const end = employeeEndIndex;
-
-    for (let i = start; i <= end && i < rows.length; i++) {
-        const row = rows[i];
-        if (!row || row.length === 0) continue;
-        
-        const name = String(row[0] || '').trim();
-        if (!name) continue;
-
-        // Find matching employee
-        let matchedName = EMPLOYEES.find(e => name.includes(e.replace('1', '').trim()));
-        if (!matchedName) matchedName = EMPLOYEES.find(e => name.includes(e.split('.')[0]));
         
         if (matchedName) {
+            // Extract shifts for this employee
             const shifts = [];
-            for (let j = 1; j < row.length && j <= dates.length; j++) {
-                const val = String(row[j] || '').trim();
-                shifts.push(val || '');
-            }
-            employeeData[matchedName] = shifts;
-        }
-    }
-
-    // If we couldn't find employees, try a more aggressive approach
-    if (Object.keys(employeeData).length === 0) {
-        // Look for any rows with data
-        for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
-            if (!row || row.length === 0) continue;
-            const firstCell = String(row[0] || '');
-            if (firstCell && !firstCell.includes('Totals') && !firstCell.includes('Shift') && !firstCell.includes('Name')) {
-                // Check if any employee name is in this cell
-                for (let emp of EMPLOYEES) {
-                    if (firstCell.includes(emp.replace('1', '').trim()) || firstCell.includes(emp.split('.')[0])) {
-                        const shifts = [];
-                        for (let j = 1; j < row.length && j <= dates.length; j++) {
-                            const val = String(row[j] || '').trim();
-                            shifts.push(val || '');
-                        }
-                        employeeData[emp] = shifts;
-                        break;
-                    }
+            // Start from column 1 (skip name column)
+            for (let j = 1; j < row.length && j <= dates.length + 1; j++) {
+                const cell = String(row[j] || '').trim();
+                // Convert to uppercase shift code
+                const shiftCode = cell.toUpperCase();
+                // Only include valid shift codes
+                if (['A', 'B', 'C', 'GEN', 'MID', 'WO', 'LV'].includes(shiftCode) || shiftCode === '') {
+                    shifts.push(shiftCode || '');
+                } else if (cell) {
+                    // If it's a valid code but not in our list, still include it
+                    shifts.push(cell);
+                } else {
+                    shifts.push('');
                 }
             }
+            
+            // Make sure shifts length matches dates length
+            while (shifts.length < dates.length) {
+                shifts.push('');
+            }
+            
+            employeeData[matchedName] = shifts.slice(0, dates.length);
+            console.log('Found employee:', matchedName, 'with', shifts.length, 'shifts');
         }
     }
-
-    // Save data
+    
+    // STEP 3: If we found employees and dates, save the data
     if (Object.keys(employeeData).length > 0 && dates.length > 0) {
         rosterData = {
             dates: dates,
@@ -214,9 +232,23 @@ function processExcelData(rows) {
         
         // Save to localStorage
         localStorage.setItem('rosterData', JSON.stringify(rosterData));
+        console.log('✅ Roster data saved!', Object.keys(employeeData).length, 'employees,', dates.length, 'dates');
+        
+        // Re-render everything
         renderAll();
+        showStatus('✅ Roster loaded successfully!', 'success');
     } else {
-        showStatus('❌ Could not find employee data in the file. Please check the format.', 'error');
+        console.error('❌ Could not find employee data. Employees found:', Object.keys(employeeData).length, 'Dates found:', dates.length);
+        
+        // Show a more helpful error
+        let errorMsg = '❌ Could not parse the roster. ';
+        if (Object.keys(employeeData).length === 0) {
+            errorMsg += 'No employee names found. Make sure the Excel has employee names in the first column. ';
+        }
+        if (dates.length === 0) {
+            errorMsg += 'No dates found. Make sure the Excel has dates in the first row.';
+        }
+        showStatus(errorMsg, 'error');
     }
 }
 
