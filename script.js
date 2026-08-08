@@ -13,16 +13,6 @@ const EMPLOYEES = [
     'Onkar1 Kulkarni'
 ];
 
-const SHIFT_COLORS = {
-    'A': '#FF6B35',
-    'B': '#F7931E',
-    'C': '#2C3E50',
-    'GEN': '#27AE60',
-    'MID': '#8E44AD',
-    'WO': '#95A5A6',
-    'LV': '#E74C3C'
-};
-
 const SHIFT_NAMES = {
     'A': 'Morning',
     'B': 'Afternoon',
@@ -42,35 +32,61 @@ const SHIFT_TIMES = {
 };
 
 let rosterData = null;
-let headers = [];
 
 // ============================================
 // INITIALIZATION
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    // Try to load from localStorage
+    // Try to load from localStorage first (user uploaded)
     const saved = localStorage.getItem('rosterData');
     if (saved) {
         try {
             const data = JSON.parse(saved);
-            rosterData = data;
-            renderAll();
-            showStatus('Data loaded from saved backup', 'success');
-        } catch (e) {
-            console.error('Error loading saved data', e);
-        }
+            if (data.dates && data.employees && Object.keys(data.employees).length > 0) {
+                rosterData = data;
+                renderAll();
+                updateTodayDate();
+                showStatus('📅 Data loaded from your upload', 'success');
+                return;
+            }
+        } catch (e) {}
     }
 
-    // Set up file upload handlers
+    // If no localStorage, load from GitHub
+    loadFromGitHub();
+    
+    // Set up handlers
     document.getElementById('fileInput').addEventListener('change', handleFileUpload);
     document.getElementById('importInput').addEventListener('change', handleImport);
     document.getElementById('searchInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') searchEmployee();
     });
 
-    // Update today's date
     updateTodayDate();
 });
+
+// ============================================
+// LOAD FROM GITHUB
+// ============================================
+function loadFromGitHub() {
+    fetch('data/roster.json')
+        .then(response => {
+            if (!response.ok) throw new Error('File not found');
+            return response.json();
+        })
+        .then(data => {
+            if (data.dates && data.employees && Object.keys(data.employees).length > 0) {
+                rosterData = data;
+                renderAll();
+                showStatus('📅 Roster loaded from GitHub', 'success');
+                console.log('✅ Loaded:', Object.keys(data.employees).length, 'employees,', data.dates.length, 'days');
+            }
+        })
+        .catch(error => {
+            console.log('No roster.json found');
+            showStatus('📤 Upload a roster to get started', 'success');
+        });
+}
 
 // ============================================
 // FILE UPLOAD
@@ -87,7 +103,6 @@ function handleFileUpload(event) {
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
-            console.log('Excel parsed, rows:', jsonData.length);
             processExcelData(jsonData);
             showStatus(`✅ Successfully loaded: ${file.name}`, 'success');
         } catch (error) {
@@ -96,133 +111,63 @@ function handleFileUpload(event) {
         }
     };
     reader.readAsArrayBuffer(file);
-    event.target.value = ''; // Reset input
+    event.target.value = '';
 }
 
 // ============================================
-// PROCESS EXCEL DATA - FIXED VERSION
+// PROCESS EXCEL DATA
 // ============================================
 function processExcelData(rows) {
-    console.log('Processing Excel data...', rows.length, 'rows');
-    
-    // STEP 1: Find dates (first row with dates)
     let dates = [];
-    let dateRowIndex = -1;
-    let employeeStartIndex = -1;
-    let employeeEndIndex = -1;
-    let nameColumnIndex = 0;
     
-    // First, find the row with dates (look for date pattern)
-    for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    // Find dates
+    for (let i = 0; i < Math.min(rows.length, 15); i++) {
         const row = rows[i];
         if (!row) continue;
-        
-        // Check if this row has dates (look for cells with date format)
         let dateCount = 0;
+        let dateCandidates = [];
         for (let j = 1; j < row.length && j < 35; j++) {
             const cell = String(row[j] || '');
-            // Check for date pattern like 01-08-2026 or 01/08/2026
             if (cell.match(/\d{2}[-/]\d{2}[-/]\d{4}/)) {
                 dateCount++;
+                dateCandidates.push(cell.trim());
             }
         }
-        
-        if (dateCount > 10) { // Found a row with many dates
-            dateRowIndex = i;
-            dates = [];
-            for (let j = 1; j < row.length && j < 35; j++) {
-                const cell = String(row[j] || '').trim();
-                if (cell.match(/\d{2}[-/]\d{2}[-/]\d{4}/)) {
-                    dates.push(cell);
-                }
-            }
-            console.log('Found dates:', dates.length, 'dates');
+        if (dateCount > 10) {
+            dates = dateCandidates;
             break;
         }
     }
-    
-    // If no dates found, look for the row with "Name" or employee names
-    if (dates.length === 0) {
-        for (let i = 0; i < Math.min(rows.length, 15); i++) {
-            const row = rows[i];
-            if (!row) continue;
-            const firstCell = String(row[0] || '').toLowerCase();
-            if (firstCell.includes('name') || firstCell.includes('employee')) {
-                dateRowIndex = i + 1;
-                // Get dates from next row
-                if (i + 1 < rows.length) {
-                    const nextRow = rows[i + 1];
-                    for (let j = 1; j < nextRow.length && j < 35; j++) {
-                        const cell = String(nextRow[j] || '').trim();
-                        if (cell.match(/\d{2}[-/]\d{2}[-/]\d{4}/)) {
-                            dates.push(cell);
-                        }
-                    }
-                }
-                break;
-            }
-        }
-    }
-    
-    // STEP 2: Find employee data
-    // Look for rows with employee names
-    const employeeNames = [
-        'Manogna.Kandukuri', 'Kunj.Trivedi', 'Devansh Singhai',
-        'Arjun.Chilkuri', 'Gopi.Nagendra', 'Akash1.Kamble',
-        'Ashwin.Rajesh', 'Himanshu1.Chaudhari', 'Onkar1 Kulkarni'
-    ];
-    
+
     const employeeData = {};
-    
-    // Scan all rows for employee names
+
     for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         if (!row || row.length === 0) continue;
-        
         const firstCell = String(row[0] || '').trim();
         if (!firstCell) continue;
-        
-        // Check if this row contains an employee name
+
         let matchedName = null;
-        for (const emp of employeeNames) {
-            // Try exact match or partial match
+        for (const emp of EMPLOYEES) {
             const empClean = emp.replace('1', '').trim();
-            if (firstCell.includes(empClean) || firstCell.includes(emp.split('.')[0])) {
+            const firstName = emp.split('.')[0].replace('1', '').trim();
+            if (firstCell.includes(empClean) || firstCell.includes(firstName)) {
                 matchedName = emp;
                 break;
             }
         }
-        
+
         if (matchedName) {
-            // Extract shifts for this employee
             const shifts = [];
-            // Start from column 1 (skip name column)
             for (let j = 1; j < row.length && j <= dates.length + 1; j++) {
-                const cell = String(row[j] || '').trim();
-                // Convert to uppercase shift code
-                const shiftCode = cell.toUpperCase();
-                // Only include valid shift codes
-                if (['A', 'B', 'C', 'GEN', 'MID', 'WO', 'LV'].includes(shiftCode) || shiftCode === '') {
-                    shifts.push(shiftCode || '');
-                } else if (cell) {
-                    // If it's a valid code but not in our list, still include it
-                    shifts.push(cell);
-                } else {
-                    shifts.push('');
-                }
+                const cell = String(row[j] || '').trim().toUpperCase();
+                shifts.push(cell || '');
             }
-            
-            // Make sure shifts length matches dates length
-            while (shifts.length < dates.length) {
-                shifts.push('');
-            }
-            
+            while (shifts.length < dates.length) shifts.push('');
             employeeData[matchedName] = shifts.slice(0, dates.length);
-            console.log('Found employee:', matchedName, 'with', shifts.length, 'shifts');
         }
     }
-    
-    // STEP 3: If we found employees and dates, save the data
+
     if (Object.keys(employeeData).length > 0 && dates.length > 0) {
         rosterData = {
             dates: dates,
@@ -230,25 +175,11 @@ function processExcelData(rows) {
             month: getMonthFromDates(dates)
         };
         
-        // Save to localStorage
         localStorage.setItem('rosterData', JSON.stringify(rosterData));
-        console.log('✅ Roster data saved!', Object.keys(employeeData).length, 'employees,', dates.length, 'dates');
-        
-        // Re-render everything
         renderAll();
         showStatus('✅ Roster loaded successfully!', 'success');
     } else {
-        console.error('❌ Could not find employee data. Employees found:', Object.keys(employeeData).length, 'Dates found:', dates.length);
-        
-        // Show a more helpful error
-        let errorMsg = '❌ Could not parse the roster. ';
-        if (Object.keys(employeeData).length === 0) {
-            errorMsg += 'No employee names found. Make sure the Excel has employee names in the first column. ';
-        }
-        if (dates.length === 0) {
-            errorMsg += 'No dates found. Make sure the Excel has dates in the first row.';
-        }
-        showStatus(errorMsg, 'error');
+        showStatus('❌ Could not parse the roster. Found ' + Object.keys(employeeData).length + ' employees and ' + dates.length + ' dates.', 'error');
     }
 }
 
@@ -281,9 +212,8 @@ function updateMonthDisplay() {
 
 function getMonthFromDates(dates) {
     if (!dates || dates.length === 0) return 'Unknown';
-    const firstDate = dates[0];
     try {
-        const date = new Date(firstDate);
+        const date = new Date(dates[0]);
         return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     } catch {
         return dates[0].substring(0, 7);
@@ -317,7 +247,7 @@ function renderTodayView() {
         return;
     }
 
-    // Group employees by shift
+    // Group employees by shift for today
     const groups = {
         'A': [],
         'B': [],
@@ -333,10 +263,6 @@ function renderTodayView() {
             const shift = shifts[todayIndex].toUpperCase();
             if (groups[shift]) {
                 groups[shift].push(name);
-            } else {
-                // Unknown shift - add to a default group
-                if (!groups['OTHER']) groups['OTHER'] = [];
-                groups['OTHER'].push(name);
             }
         }
     }
@@ -345,8 +271,10 @@ function renderTodayView() {
 
     // Available shifts (A, B, C, GEN, MID)
     const availableShifts = ['A', 'B', 'C', 'GEN', 'MID'];
+    let hasAvailable = false;
     for (const shift of availableShifts) {
         const names = groups[shift] || [];
+        if (names.length > 0) hasAvailable = true;
         const time = SHIFT_TIMES[shift] || '';
         html += `
             <div class="shift-group">
@@ -416,20 +344,18 @@ function renderFullMonth() {
 
     let html = '<table><thead><tr><th>Employee</th>';
     
-    // Date headers (show short format)
+    // Show day numbers only (1, 2, 3...)
     for (let i = 0; i < dates.length && i < 31; i++) {
         const date = new Date(dates[i]);
-        const day = date.toLocaleDateString('en-IN', { day: '2-digit' });
-        const month = date.toLocaleDateString('en-IN', { month: 'short' });
-        html += `<th>${day}/${month}</th>`;
+        const day = date.getDate();
+        html += `<th>${day}</th>`;
     }
     html += '</tr></thead><tbody>';
 
     const todayIndex = getTodayIndex();
 
     for (const [name, shifts] of Object.entries(employees)) {
-        html += `<tr>`;
-        html += `<td>${name}</td>`;
+        html += `<tr><td>${name}</td>`;
         for (let i = 0; i < dates.length && i < 31; i++) {
             const shift = shifts && shifts[i] ? shifts[i].toUpperCase() : '';
             const isToday = i === todayIndex;
@@ -489,7 +415,7 @@ function searchEmployee() {
     
     for (let i = 0; i < dates.length && i < 31; i++) {
         const date = new Date(dates[i]);
-        const dateStr = date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+        const dateStr = date.getDate();
         const shift = found[i] ? found[i].toUpperCase() : '-';
         const isToday = i === todayIndex;
         
@@ -528,7 +454,7 @@ function clearSearch() {
 // ============================================
 function exportData() {
     if (!rosterData) {
-        showStatus('❌ No data to export. Upload a roster first.', 'error');
+        showStatus('❌ No data to export', 'error');
         return;
     }
 
@@ -559,11 +485,10 @@ function handleImport(event) {
                 renderAll();
                 showStatus('✅ Data imported successfully!', 'success');
             } else {
-                showStatus('❌ Invalid data format. Please check the file.', 'error');
+                showStatus('❌ Invalid data format.', 'error');
             }
         } catch (error) {
-            console.error(error);
-            showStatus('❌ Error reading file. Please check the format.', 'error');
+            showStatus('❌ Error reading file.', 'error');
         }
     };
     reader.readAsText(file);
@@ -571,15 +496,12 @@ function handleImport(event) {
 }
 
 // ============================================
-// UTILITY FUNCTIONS
+// UTILITY
 // ============================================
 function showStatus(message, type) {
     const el = document.getElementById('statusMessage');
     el.textContent = message;
     el.className = `status-message ${type}`;
     el.style.display = 'block';
-    
-    setTimeout(() => {
-        el.style.display = 'none';
-    }, 5000);
+    setTimeout(() => { el.style.display = 'none'; }, 5000);
 }
