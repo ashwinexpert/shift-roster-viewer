@@ -37,22 +37,7 @@ let rosterData = null;
 // INITIALIZATION
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    // Try to load from localStorage first (user uploaded)
-    const saved = localStorage.getItem('rosterData');
-    if (saved) {
-        try {
-            const data = JSON.parse(saved);
-            if (data.dates && data.employees && Object.keys(data.employees).length > 0) {
-                rosterData = data;
-                renderAll();
-                updateTodayDate();
-                showStatus('📅 Data loaded from your upload', 'success');
-                return;
-            }
-        } catch (e) {}
-    }
-
-    // If no localStorage, load from GitHub
+    // ALWAYS load from GitHub first (so friends see same data)
     loadFromGitHub();
     
     // Set up handlers
@@ -69,6 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // LOAD FROM GITHUB
 // ============================================
 function loadFromGitHub() {
+    console.log('🔄 Loading from GitHub...');
     fetch('data/roster.json')
         .then(response => {
             if (!response.ok) throw new Error('File not found');
@@ -77,13 +63,24 @@ function loadFromGitHub() {
         .then(data => {
             if (data.dates && data.employees && Object.keys(data.employees).length > 0) {
                 rosterData = data;
+                // Fix the month display
+                if (data.dates && data.dates.length > 0) {
+                    const firstDate = data.dates[0];
+                    const dateParts = firstDate.split('-');
+                    if (dateParts.length === 3) {
+                        const month = parseInt(dateParts[1]);
+                        const year = parseInt(dateParts[2]);
+                        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                        rosterData.month = monthNames[month - 1] + ' ' + year;
+                    }
+                }
                 renderAll();
                 showStatus('📅 Roster loaded from GitHub', 'success');
                 console.log('✅ Loaded:', Object.keys(data.employees).length, 'employees,', data.dates.length, 'days');
             }
         })
         .catch(error => {
-            console.log('No roster.json found');
+            console.log('❌ No roster.json found');
             showStatus('📤 Upload a roster to get started', 'success');
         });
 }
@@ -169,10 +166,21 @@ function processExcelData(rows) {
     }
 
     if (Object.keys(employeeData).length > 0 && dates.length > 0) {
+        // Fix month display
+        const firstDate = dates[0];
+        const dateParts = firstDate.split('-');
+        let monthDisplay = 'Unknown';
+        if (dateParts.length === 3) {
+            const month = parseInt(dateParts[1]);
+            const year = parseInt(dateParts[2]);
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            monthDisplay = monthNames[month - 1] + ' ' + year;
+        }
+        
         rosterData = {
             dates: dates,
             employees: employeeData,
-            month: getMonthFromDates(dates)
+            month: monthDisplay
         };
         
         localStorage.setItem('rosterData', JSON.stringify(rosterData));
@@ -207,16 +215,16 @@ function updateTodayDate() {
 function updateMonthDisplay() {
     if (rosterData && rosterData.month) {
         document.getElementById('monthDisplay').textContent = rosterData.month;
-    }
-}
-
-function getMonthFromDates(dates) {
-    if (!dates || dates.length === 0) return 'Unknown';
-    try {
-        const date = new Date(dates[0]);
-        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-    } catch {
-        return dates[0].substring(0, 7);
+    } else if (rosterData && rosterData.dates && rosterData.dates.length > 0) {
+        // Fallback: parse from first date
+        const firstDate = rosterData.dates[0];
+        const dateParts = firstDate.split('-');
+        if (dateParts.length === 3) {
+            const month = parseInt(dateParts[1]);
+            const year = parseInt(dateParts[2]);
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            document.getElementById('monthDisplay').textContent = monthNames[month - 1] + ' ' + year;
+        }
     }
 }
 
@@ -271,10 +279,8 @@ function renderTodayView() {
 
     // Available shifts (A, B, C, GEN, MID)
     const availableShifts = ['A', 'B', 'C', 'GEN', 'MID'];
-    let hasAvailable = false;
     for (const shift of availableShifts) {
         const names = groups[shift] || [];
-        if (names.length > 0) hasAvailable = true;
         const time = SHIFT_TIMES[shift] || '';
         html += `
             <div class="shift-group">
@@ -348,7 +354,17 @@ function renderFullMonth() {
     for (let i = 0; i < dates.length && i < 31; i++) {
         const date = new Date(dates[i]);
         const day = date.getDate();
-        html += `<th>${day}</th>`;
+        if (!isNaN(day)) {
+            html += `<th>${day}</th>`;
+        } else {
+            // Fallback: extract day from string
+            const parts = dates[i].split('-');
+            if (parts.length === 3) {
+                html += `<th>${parseInt(parts[0])}</th>`;
+            } else {
+                html += `<th>${i + 1}</th>`;
+            }
+        }
     }
     html += '</tr></thead><tbody>';
 
@@ -415,7 +431,15 @@ function searchEmployee() {
     
     for (let i = 0; i < dates.length && i < 31; i++) {
         const date = new Date(dates[i]);
-        const dateStr = date.getDate();
+        let dateStr = date.getDate();
+        if (isNaN(dateStr)) {
+            const parts = dates[i].split('-');
+            if (parts.length === 3) {
+                dateStr = parseInt(parts[0]);
+            } else {
+                dateStr = i + 1;
+            }
+        }
         const shift = found[i] ? found[i].toUpperCase() : '-';
         const isToday = i === todayIndex;
         
@@ -481,6 +505,17 @@ function handleImport(event) {
             const data = JSON.parse(e.target.result);
             if (data.dates && data.employees) {
                 rosterData = data;
+                // Fix month
+                if (data.dates && data.dates.length > 0) {
+                    const firstDate = data.dates[0];
+                    const dateParts = firstDate.split('-');
+                    if (dateParts.length === 3) {
+                        const month = parseInt(dateParts[1]);
+                        const year = parseInt(dateParts[2]);
+                        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                        rosterData.month = monthNames[month - 1] + ' ' + year;
+                    }
+                }
                 localStorage.setItem('rosterData', JSON.stringify(rosterData));
                 renderAll();
                 showStatus('✅ Data imported successfully!', 'success');
