@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Excel to JSON Converter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #1a1a2e; }
+        .upload-area {
+            border: 2px dashed #667eea;
+            padding: 40px;
+            text-align: center;
+            border-radius: 12px;
+            margin: 20px 0;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            background: #f8f9ff;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover { background: #5a67d8; }
+        #output { 
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 Excel to JSON Converter</h1>
+        <p>Upload your roster Excel file to convert to JSON format.</p>
+        
+        <div class="upload-area" id="dropZone">
+            <p>📤 Drag & drop your Excel file here</p>
+            <p style="font-size:12px; color:#999;">or click to browse</p>
+            <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;" />
+        </div>
+        
+        <button id="downloadBtn" style="display:none;">📥 Download roster.json</button>
+        
+        <div id="output"></div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const output = document.getElementById('output');
+        const downloadBtn = document.getElementById('downloadBtn');
+        
+        let jsonData = null;
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#764ba2';
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = '#667eea';
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#667eea';
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    
+                    jsonData = processExcel(rows);
+                    
+                    if (jsonData) {
+                        output.innerHTML = `<p class="success">✅ Successfully converted! Found ${Object.keys(jsonData.employees).length} employees and ${jsonData.dates.length} dates.</p>`;
+                        downloadBtn.style.display = 'block';
+                    } else {
+                        output.innerHTML = `<p class="error">❌ Failed to parse. Please check file format.</p>`;
+                    }
+                } catch (error) {
+                    output.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function processExcel(rows) {
+            // Find dates
+            let dates = [];
+            for (let i = 0; i < Math.min(rows.length, 10); i++) {
+                const row = rows[i];
+                if (!row) continue;
+                let dateCount = 0;
+                for (let j = 1; j < row.length && j < 35; j++) {
+                    const cell = String(row[j] || '');
+                    if (cell.match(/\d{2}[-/]\d{2}[-/]\d{4}/)) {
+                        dateCount++;
+                    }
+                }
+                if (dateCount > 10) {
+                    for (let j = 1; j < row.length && j < 35; j++) {
+                        const cell = String(row[j] || '').trim();
+                        if (cell.match(/\d{2}[-/]\d{2}[-/]\d{4}/)) {
+                            dates.push(cell);
+                        }
+                    }
+                    break;
+                }
+            }
+
+            const employeeNames = [
+                'Manogna.Kandukuri', 'Kunj.Trivedi', 'Devansh Singhai',
+                'Arjun.Chilkuri', 'Gopi.Nagendra', 'Akash1.Kamble',
+                'Ashwin.Rajesh', 'Himanshu1.Chaudhari', 'Onkar1 Kulkarni'
+            ];
+
+            const employeeData = {};
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length === 0) continue;
+                const firstCell = String(row[0] || '').trim();
+                if (!firstCell) continue;
+
+                let matchedName = null;
+                for (const emp of employeeNames) {
+                    const empClean = emp.replace('1', '').trim();
+                    if (firstCell.includes(empClean) || firstCell.includes(emp.split('.')[0])) {
+                        matchedName = emp;
+                        break;
+                    }
+                }
+
+                if (matchedName) {
+                    const shifts = [];
+                    for (let j = 1; j < row.length && j <= dates.length + 1; j++) {
+                        const cell = String(row[j] || '').trim().toUpperCase();
+                        shifts.push(cell || '');
+                    }
+                    while (shifts.length < dates.length) shifts.push('');
+                    employeeData[matchedName] = shifts.slice(0, dates.length);
+                }
+            }
+
+            if (Object.keys(employeeData).length > 0 && dates.length > 0) {
+                return {
+                    dates: dates,
+                    employees: employeeData
+                };
+            }
+            return null;
+        }
+
+        downloadBtn.addEventListener('click', () => {
+            if (!jsonData) return;
+            const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'roster.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            output.innerHTML += `<p class="success">✅ Downloaded! Now upload this file to GitHub.</p>`;
+        });
+    </script>
+</body>
+</html>
