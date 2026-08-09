@@ -43,12 +43,12 @@ h1 {
     font-weight: 600;
 }
 
-/* Controls */
-.controls {
+/* Admin Controls */
+.admin-controls {
     display: flex;
     gap: 10px;
-    flex-wrap: wrap;
     margin-bottom: 16px;
+    flex-wrap: wrap;
 }
 
 .btn {
@@ -68,19 +68,18 @@ h1 {
     transform: scale(0.95);
 }
 
-.btn-primary {
-    background: #667eea;
+.btn-converter {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    flex: 1;
+    min-width: 120px;
 }
 
-.btn-success {
+.btn-help {
     background: #27ae60;
     color: white;
-}
-
-.btn-warning {
-    background: #f39c12;
-    color: white;
+    flex: 1;
+    min-width: 120px;
 }
 
 .btn-search {
@@ -399,12 +398,70 @@ footer {
     padding-top: 12px;
 }
 
+/* Help Modal */
+.help-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.help-modal.active {
+    display: flex;
+}
+
+.help-modal-content {
+    background: white;
+    max-width: 500px;
+    padding: 30px;
+    border-radius: 16px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.help-modal-content h2 {
+    color: #1a1a2e;
+    margin-bottom: 16px;
+}
+
+.help-modal-content ol {
+    padding-left: 20px;
+    line-height: 1.8;
+    color: #333;
+}
+
+.help-modal-content code {
+    background: #f0f2f5;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.help-modal .close-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 16px;
+    width: 100%;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
     body { padding: 8px; }
     .container { padding: 12px; }
     h1 { font-size: 20px; }
-    .controls .btn { font-size: 12px; padding: 8px 12px; }
+    .btn { font-size: 12px; padding: 8px 12px; }
     .shift-group-header { font-size: 13px; }
     .shift-group .name-tag { font-size: 12px; }
     table { font-size: 11px; min-width: 400px; }
@@ -412,4 +469,6 @@ footer {
     th:first-child, td:first-child { min-width: 70px; font-size: 11px; }
     .shift-cell { font-size: 10px; padding: 1px 4px; min-width: 24px; }
     .legend-item { font-size: 11px; }
+    .admin-controls { flex-direction: column; }
+    .btn-converter, .btn-help { min-width: unset; }
 }
