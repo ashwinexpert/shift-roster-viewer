@@ -31,6 +31,14 @@ const SHIFT_TIMES = {
     'MID': '11:00am-8:00pm'
 };
 
+const SHIFT_EMOJIS = {
+    'A': '🌅',
+    'B': '☀️',
+    'C': '🌙',
+    'GEN': '🟢',
+    'MID': '🌗'
+};
+
 let rosterData = null;
 
 // ============================================
@@ -88,8 +96,8 @@ function loadFromGitHub() {
 function renderAll() {
     if (!rosterData) return;
     updateMonthDisplay();
-    renderTodayView();
-    renderFullMonth();
+    renderFullMonth();  // Table first
+    renderTodayView();  // Today view after table
 }
 
 function updateTodayDate() {
@@ -147,96 +155,7 @@ function getTodayIndex() {
 }
 
 // ============================================
-// TODAY VIEW
-// ============================================
-function renderTodayView() {
-    const container = document.getElementById('todayShiftSummary');
-    const todayIndex = getTodayIndex();
-    
-    if (todayIndex === -1 || !rosterData || !rosterData.employees) {
-        container.innerHTML = `<p style="color:rgba(255,255,255,0.8); text-align:center; padding:20px;">
-            📋 No shift data available for today
-        </p>`;
-        return;
-    }
-
-    const groups = {
-        'A': [], 'B': [], 'C': [], 'GEN': [], 'MID': [], 'WO': [], 'LV': []
-    };
-
-    for (const [name, shifts] of Object.entries(rosterData.employees)) {
-        if (shifts && shifts[todayIndex]) {
-            const shift = shifts[todayIndex].toUpperCase();
-            if (groups[shift]) {
-                groups[shift].push(name);
-            }
-        }
-    }
-
-    // Check if there's any data at all
-    const hasData = Object.values(groups).some(arr => arr.length > 0);
-
-    if (!hasData) {
-        container.innerHTML = `<p style="color:rgba(255,255,255,0.8); text-align:center; padding:20px;">
-            📋 No shifts assigned for today
-        </p>`;
-        return;
-    }
-
-    let html = '';
-
-    const availableShifts = ['A', 'B', 'C', 'GEN', 'MID'];
-    for (const shift of availableShifts) {
-        const names = groups[shift] || [];
-        const time = SHIFT_TIMES[shift] || '';
-        html += `
-            <div class="shift-group">
-                <div class="shift-group-header">
-                    <span>${getShiftIcon(shift)} ${SHIFT_NAMES[shift] || shift}</span>
-                    <span class="shift-time">${time}</span>
-                </div>
-                <div class="names">
-                    ${names.length > 0 ? names.map(n => `<span class="name-tag">${n}</span>`).join('') : 
-                    `<span class="empty">No one available</span>`}
-                </div>
-            </div>
-        `;
-    }
-
-    const notAvailable = [];
-    if (groups['WO'] && groups['WO'].length > 0) {
-        notAvailable.push({ type: 'WO', label: '📅 Weekly Off', names: groups['WO'] });
-    }
-    if (groups['LV'] && groups['LV'].length > 0) {
-        notAvailable.push({ type: 'LV', label: '🏖️ On Leave', names: groups['LV'] });
-    }
-
-    if (notAvailable.length > 0) {
-        html += `<div class="not-available"><strong>❌ Not Available Today</strong>`;
-        for (const item of notAvailable) {
-            html += `
-                <div class="na-group">
-                    <span style="font-size:13px;">${item.label}:</span>
-                    ${item.names.map(n => `<span class="na-tag ${item.type}">${n}</span>`).join('')}
-                </div>
-            `;
-        }
-        html += `</div>`;
-    }
-
-    container.innerHTML = html;
-}
-
-function getShiftIcon(shift) {
-    const icons = {
-        'A': '🌅', 'B': '☀️', 'C': '🌙',
-        'GEN': '🟢', 'MID': '🌗', 'WO': '📅', 'LV': '🏖️'
-    };
-    return icons[shift] || '📌';
-}
-
-// ============================================
-// FULL MONTH VIEW
+// FULL MONTH VIEW - NOW FIRST
 // ============================================
 function renderFullMonth() {
     const container = document.getElementById('fullMonthTable');
@@ -269,16 +188,100 @@ function renderFullMonth() {
         for (let i = 0; i < dates.length && i < 31; i++) {
             const shift = shifts && shifts[i] ? shifts[i].toUpperCase() : '';
             const isToday = i === todayIndex;
-            let cell = `<span class="shift-cell ${shift}">${shift || '-'}</span>`;
+            let cellClass = `shift-cell ${shift}`;
             if (isToday && shift) {
-                cell = `<span class="shift-cell ${shift}" style="border: 2px solid #FFD700; box-shadow: 0 0 8px rgba(255,215,0,0.5);">${shift}</span>`;
+                cellClass += ' today-highlight';
             }
-            html += `<td>${cell}</td>`;
+            html += `<td><span class="${cellClass}">${shift || '-'}</span></td>`;
         }
         html += '</tr>';
     }
 
     html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+// ============================================
+// TODAY VIEW - NOW AFTER TABLE
+// ============================================
+function renderTodayView() {
+    const container = document.getElementById('todayShiftSummary');
+    const todayIndex = getTodayIndex();
+    
+    if (todayIndex === -1 || !rosterData || !rosterData.employees) {
+        container.innerHTML = `<p style="color:rgba(255,255,255,0.8); text-align:center; padding:20px;">
+            📋 No shift data available for today
+        </p>`;
+        return;
+    }
+
+    const groups = {
+        'A': [], 'B': [], 'C': [], 'GEN': [], 'MID': [], 'WO': [], 'LV': []
+    };
+
+    for (const [name, shifts] of Object.entries(rosterData.employees)) {
+        if (shifts && shifts[todayIndex]) {
+            const shift = shifts[todayIndex].toUpperCase();
+            if (groups[shift]) {
+                groups[shift].push(name);
+            }
+        }
+    }
+
+    const hasData = Object.values(groups).some(arr => arr.length > 0);
+
+    if (!hasData) {
+        container.innerHTML = `<p style="color:rgba(255,255,255,0.8); text-align:center; padding:20px;">
+            📋 No shifts assigned for today
+        </p>`;
+        return;
+    }
+
+    let html = '';
+
+    const availableShifts = ['A', 'B', 'C', 'GEN', 'MID'];
+
+    for (const shift of availableShifts) {
+        const names = groups[shift] || [];
+        const time = SHIFT_TIMES[shift] || '';
+        const displayName = SHIFT_NAMES[shift] || shift;
+        const emoji = SHIFT_EMOJIS[shift] || '';
+        
+        html += `
+            <div class="shift-group" data-shift="${shift}">
+                <div class="shift-group-header">
+                    <span>${emoji} ${displayName}</span>
+                    <span class="shift-time">${time}</span>
+                </div>
+                <div class="names">
+                    ${names.length > 0 ? names.map(n => `<span class="name-tag">${n}</span>`).join('') : 
+                    `<span class="empty">No one available</span>`}
+                </div>
+            </div>
+        `;
+    }
+
+    const notAvailable = [];
+    if (groups['WO'] && groups['WO'].length > 0) {
+        notAvailable.push({ type: 'WO', label: '📅 Weekly Off', names: groups['WO'] });
+    }
+    if (groups['LV'] && groups['LV'].length > 0) {
+        notAvailable.push({ type: 'LV', label: '🏖️ On Leave', names: groups['LV'] });
+    }
+
+    if (notAvailable.length > 0) {
+        html += `<div class="not-available"><strong>❌ Not Available Today</strong>`;
+        for (const item of notAvailable) {
+            html += `
+                <div class="na-group">
+                    <span>${item.label}:</span>
+                    ${item.names.map(n => `<span class="na-tag ${item.type}">${n}</span>`).join('')}
+                </div>
+            `;
+        }
+        html += `</div>`;
+    }
+
     container.innerHTML = html;
 }
 
@@ -357,6 +360,14 @@ function searchEmployee() {
 
     resultsContainer.innerHTML = html;
     resultsContainer.style.display = 'block';
+}
+
+function getShiftIcon(shift) {
+    const icons = {
+        'A': '🌅', 'B': '☀️', 'C': '🌙',
+        'GEN': '🟢', 'MID': '🌗', 'WO': '📅', 'LV': '🏖️'
+    };
+    return icons[shift] || '📌';
 }
 
 function clearSearch() {
