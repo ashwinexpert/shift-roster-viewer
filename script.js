@@ -119,16 +119,30 @@ function updateMonthDisplay() {
     }
 }
 
+// ============================================
+// GET TODAY INDEX - FIXED!
+// ============================================
 function getTodayIndex() {
     if (!rosterData || !rosterData.dates) return -1;
     const today = new Date();
-    const todayStr = today.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    
+    // Get today in DD-MM-YYYY format
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    const todayStr = `${day}-${month}-${year}`;
+    
+    console.log('Today:', todayStr);
+    console.log('Available dates:', rosterData.dates);
     
     for (let i = 0; i < rosterData.dates.length; i++) {
-        const date = new Date(rosterData.dates[i]);
-        const dateStr = date.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        if (dateStr === todayStr) return i;
+        if (rosterData.dates[i] === todayStr) {
+            console.log('✅ Found today at index:', i);
+            return i;
+        }
     }
+    
+    console.log('❌ Today not found in roster');
     return -1;
 }
 
@@ -160,7 +174,6 @@ function renderTodayView() {
     }
 
     // Check if there's any data at all
-    const totalEmployees = Object.keys(rosterData.employees).length;
     const hasData = Object.values(groups).some(arr => arr.length > 0);
 
     if (!hasData) {
