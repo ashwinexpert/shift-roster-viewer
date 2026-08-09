@@ -15,7 +15,10 @@
 
         <!-- Full Month View - NOW FIRST -->
         <section class="full-month-section">
-            <h2>📊 Full Month Roster</h2>
+            <div class="table-header">
+                <span class="table-title">📊 Full Month Roster</span>
+                <span class="table-subtitle" id="monthSubtitle">August 2026</span>
+            </div>
             <div id="fullMonthTable" class="table-container">
                 <p style="color:#666; text-align:center; padding:20px;">
                     Loading...
@@ -23,10 +26,10 @@
             </div>
         </section>
 
-        <!-- Search -->
+        <!-- Search - COMPACT -->
         <section class="search-section">
-            <input type="text" id="searchInput" placeholder="🔍 Search employee name..." />
-            <button onclick="searchEmployee()" class="btn btn-search">Search</button>
+            <input type="text" id="searchInput" placeholder="🔍 Search employee..." />
+            <button onclick="searchEmployee()" class="btn btn-search">Go</button>
             <button onclick="clearSearch()" class="btn btn-clear">✕</button>
         </section>
 
@@ -49,27 +52,27 @@
 
         <!-- Legend -->
         <div class="legend">
-            <span class="legend-item"><span class="dot" style="background:#FF6B35;"></span> A (7:30-4:30)</span>
-            <span class="legend-item"><span class="dot" style="background:#F7931E;"></span> B (1:30-10:00)</span>
-            <span class="legend-item"><span class="dot" style="background:#2C3E50;"></span> C (10:00-7:30)</span>
-            <span class="legend-item"><span class="dot" style="background:#27AE60;"></span> GEN (9:00-6:00)</span>
-            <span class="legend-item"><span class="dot" style="background:#8E44AD;"></span> MID (11:00-8:00)</span>
-            <span class="legend-item"><span class="dot" style="background:#95A5A6;"></span> WO (Off)</span>
-            <span class="legend-item"><span class="dot" style="background:#E74C3C;"></span> LV (Leave)</span>
+            <span class="legend-item"><span class="dot" style="background:#FF6B35;"></span> A</span>
+            <span class="legend-item"><span class="dot" style="background:#F7931E;"></span> B</span>
+            <span class="legend-item"><span class="dot" style="background:#2C3E50;"></span> C</span>
+            <span class="legend-item"><span class="dot" style="background:#27AE60;"></span> GEN</span>
+            <span class="legend-item"><span class="dot" style="background:#8E44AD;"></span> MID</span>
+            <span class="legend-item"><span class="dot" style="background:#95A5A6;"></span> WO</span>
+            <span class="legend-item"><span class="dot" style="background:#E74C3C;"></span> LV</span>
         </div>
 
         <!-- Admin Controls - At Bottom -->
         <div class="admin-controls">
             <button onclick="window.open('converter.html', '_blank')" class="btn btn-converter">
-                🔄 Update Roster
+                🔄 Update
             </button>
             <button onclick="showUpdateInstructions()" class="btn btn-help">
-                📤 Upload to GitHub
+                📤 Upload
             </button>
         </div>
 
         <footer>
-            <small>📅 Updated: <span id="lastUpdated">Today</span> · Data stored on GitHub</small>
+            <small>📅 Updated: <span id="lastUpdated">Today</span></small>
         </footer>
     </div>
 
