@@ -141,7 +141,7 @@ function renderTodayView() {
     
     if (todayIndex === -1 || !rosterData || !rosterData.employees) {
         container.innerHTML = `<p style="color:rgba(255,255,255,0.8); text-align:center; padding:20px;">
-            No shift data for today. Check if roster is uploaded.
+            📋 No shift data available for today
         </p>`;
         return;
     }
@@ -157,6 +157,17 @@ function renderTodayView() {
                 groups[shift].push(name);
             }
         }
+    }
+
+    // Check if there's any data at all
+    const totalEmployees = Object.keys(rosterData.employees).length;
+    const hasData = Object.values(groups).some(arr => arr.length > 0);
+
+    if (!hasData) {
+        container.innerHTML = `<p style="color:rgba(255,255,255,0.8); text-align:center; padding:20px;">
+            📋 No shifts assigned for today
+        </p>`;
+        return;
     }
 
     let html = '';
@@ -227,7 +238,6 @@ function renderFullMonth() {
 
     let html = '<table><thead><tr><th>Employee</th>';
     
-    // Parse dates manually: "01-08-2026" -> day=1
     for (let i = 0; i < dates.length && i < 31; i++) {
         const parts = dates[i].split('-');
         if (parts.length === 3) {
