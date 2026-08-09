@@ -37,10 +37,8 @@ let rosterData = null;
 // INITIALIZATION
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    // ALWAYS load from GitHub first (so friends see same data)
     loadFromGitHub();
     
-    // Set up handlers
     document.getElementById('fileInput').addEventListener('change', handleFileUpload);
     document.getElementById('importInput').addEventListener('change', handleImport);
     document.getElementById('searchInput').addEventListener('keypress', function(e) {
@@ -117,7 +115,6 @@ function handleFileUpload(event) {
 function processExcelData(rows) {
     let dates = [];
     
-    // Find dates
     for (let i = 0; i < Math.min(rows.length, 15); i++) {
         const row = rows[i];
         if (!row) continue;
@@ -166,7 +163,6 @@ function processExcelData(rows) {
     }
 
     if (Object.keys(employeeData).length > 0 && dates.length > 0) {
-        // Fix month display
         const firstDate = dates[0];
         const dateParts = firstDate.split('-');
         let monthDisplay = 'Unknown';
@@ -187,7 +183,7 @@ function processExcelData(rows) {
         renderAll();
         showStatus('✅ Roster loaded successfully!', 'success');
     } else {
-        showStatus('❌ Could not parse the roster. Found ' + Object.keys(employeeData).length + ' employees and ' + dates.length + ' dates.', 'error');
+        showStatus('❌ Could not parse the roster.', 'error');
     }
 }
 
@@ -215,16 +211,6 @@ function updateTodayDate() {
 function updateMonthDisplay() {
     if (rosterData && rosterData.month) {
         document.getElementById('monthDisplay').textContent = rosterData.month;
-    } else if (rosterData && rosterData.dates && rosterData.dates.length > 0) {
-        // Fallback: parse from first date
-        const firstDate = rosterData.dates[0];
-        const dateParts = firstDate.split('-');
-        if (dateParts.length === 3) {
-            const month = parseInt(dateParts[1]);
-            const year = parseInt(dateParts[2]);
-            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-            document.getElementById('monthDisplay').textContent = monthNames[month - 1] + ' ' + year;
-        }
     }
 }
 
@@ -255,15 +241,8 @@ function renderTodayView() {
         return;
     }
 
-    // Group employees by shift for today
     const groups = {
-        'A': [],
-        'B': [],
-        'C': [],
-        'GEN': [],
-        'MID': [],
-        'WO': [],
-        'LV': []
+        'A': [], 'B': [], 'C': [], 'GEN': [], 'MID': [], 'WO': [], 'LV': []
     };
 
     for (const [name, shifts] of Object.entries(rosterData.employees)) {
@@ -277,7 +256,6 @@ function renderTodayView() {
 
     let html = '';
 
-    // Available shifts (A, B, C, GEN, MID)
     const availableShifts = ['A', 'B', 'C', 'GEN', 'MID'];
     for (const shift of availableShifts) {
         const names = groups[shift] || [];
@@ -296,7 +274,6 @@ function renderTodayView() {
         `;
     }
 
-    // Not available (WO and LV)
     const notAvailable = [];
     if (groups['WO'] && groups['WO'].length > 0) {
         notAvailable.push({ type: 'WO', label: '📅 Weekly Off', names: groups['WO'] });
@@ -323,19 +300,14 @@ function renderTodayView() {
 
 function getShiftIcon(shift) {
     const icons = {
-        'A': '🌅',
-        'B': '☀️',
-        'C': '🌙',
-        'GEN': '🟢',
-        'MID': '🌗',
-        'WO': '📅',
-        'LV': '🏖️'
+        'A': '🌅', 'B': '☀️', 'C': '🌙',
+        'GEN': '🟢', 'MID': '🌗', 'WO': '📅', 'LV': '🏖️'
     };
     return icons[shift] || '📌';
 }
 
 // ============================================
-// FULL MONTH VIEW
+// FULL MONTH VIEW - FIXED DATE PARSING
 // ============================================
 function renderFullMonth() {
     const container = document.getElementById('fullMonthTable');
@@ -350,20 +322,15 @@ function renderFullMonth() {
 
     let html = '<table><thead><tr><th>Employee</th>';
     
-    // Show day numbers only (1, 2, 3...)
+    // Parse dates manually: "01-08-2026" -> day=1
     for (let i = 0; i < dates.length && i < 31; i++) {
-        const date = new Date(dates[i]);
-        const day = date.getDate();
-        if (!isNaN(day)) {
+        const parts = dates[i].split('-');
+        if (parts.length === 3) {
+            const day = parseInt(parts[0]);
             html += `<th>${day}</th>`;
         } else {
-            // Fallback: extract day from string
-            const parts = dates[i].split('-');
-            if (parts.length === 3) {
-                html += `<th>${parseInt(parts[0])}</th>`;
-            } else {
-                html += `<th>${i + 1}</th>`;
-            }
+            // Fallback
+            html += `<th>${i + 1}</th>`;
         }
     }
     html += '</tr></thead><tbody>';
@@ -389,7 +356,7 @@ function renderFullMonth() {
 }
 
 // ============================================
-// SEARCH EMPLOYEE
+// SEARCH EMPLOYEE - FIXED DATE PARSING
 // ============================================
 function searchEmployee() {
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
@@ -405,7 +372,6 @@ function searchEmployee() {
         return;
     }
 
-    // Find matching employee
     let found = null;
     let foundName = '';
     for (const [name, shifts] of Object.entries(rosterData.employees)) {
@@ -430,16 +396,15 @@ function searchEmployee() {
     html += `<div class="employee-month">`;
     
     for (let i = 0; i < dates.length && i < 31; i++) {
-        const date = new Date(dates[i]);
-        let dateStr = date.getDate();
-        if (isNaN(dateStr)) {
-            const parts = dates[i].split('-');
-            if (parts.length === 3) {
-                dateStr = parseInt(parts[0]);
-            } else {
-                dateStr = i + 1;
-            }
+        // Parse date manually: "01-08-2026" -> day=1
+        const parts = dates[i].split('-');
+        let dateStr;
+        if (parts.length === 3) {
+            dateStr = parseInt(parts[0]);
+        } else {
+            dateStr = i + 1;
         }
+        
         const shift = found[i] ? found[i].toUpperCase() : '-';
         const isToday = i === todayIndex;
         
@@ -505,7 +470,6 @@ function handleImport(event) {
             const data = JSON.parse(e.target.result);
             if (data.dates && data.employees) {
                 rosterData = data;
-                // Fix month
                 if (data.dates && data.dates.length > 0) {
                     const firstDate = data.dates[0];
                     const dateParts = firstDate.split('-');
@@ -530,9 +494,6 @@ function handleImport(event) {
     event.target.value = '';
 }
 
-// ============================================
-// UTILITY
-// ============================================
 function showStatus(message, type) {
     const el = document.getElementById('statusMessage');
     el.textContent = message;
