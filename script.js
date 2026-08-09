@@ -76,7 +76,10 @@ function loadFromGitHub() {
                         const month = parseInt(dateParts[1]);
                         const year = parseInt(dateParts[2]);
                         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-                        rosterData.month = monthNames[month - 1] + ' ' + year;
+                        const monthName = monthNames[month - 1];
+                        rosterData.month = monthName + ' ' + year;
+                        // Update subtitle
+                        document.getElementById('monthSubtitle').textContent = monthName + ' ' + year;
                     }
                 }
                 renderAll();
@@ -96,8 +99,8 @@ function loadFromGitHub() {
 function renderAll() {
     if (!rosterData) return;
     updateMonthDisplay();
-    renderFullMonth();  // Table first
-    renderTodayView();  // Today view after table
+    renderFullMonth();
+    renderTodayView();
 }
 
 function updateTodayDate() {
@@ -128,40 +131,33 @@ function updateMonthDisplay() {
 }
 
 // ============================================
-// GET TODAY INDEX - FIXED!
+// GET TODAY INDEX
 // ============================================
 function getTodayIndex() {
     if (!rosterData || !rosterData.dates) return -1;
     const today = new Date();
     
-    // Get today in DD-MM-YYYY format
     const day = String(today.getDate()).padStart(2, '0');
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const year = today.getFullYear();
     const todayStr = `${day}-${month}-${year}`;
     
-    console.log('Today:', todayStr);
-    console.log('Available dates:', rosterData.dates);
-    
     for (let i = 0; i < rosterData.dates.length; i++) {
         if (rosterData.dates[i] === todayStr) {
-            console.log('✅ Found today at index:', i);
             return i;
         }
     }
-    
-    console.log('❌ Today not found in roster');
     return -1;
 }
 
 // ============================================
-// FULL MONTH VIEW - NOW FIRST
+// FULL MONTH VIEW - COMPACT
 // ============================================
 function renderFullMonth() {
     const container = document.getElementById('fullMonthTable');
     
     if (!rosterData || !rosterData.employees || Object.keys(rosterData.employees).length === 0) {
-        container.innerHTML = `<p style="color:#666; text-align:center; padding:20px;">No data to display</p>`;
+        container.innerHTML = `<p style="color:#666; text-align:center; padding:20px; font-size:13px;">No data to display</p>`;
         return;
     }
 
@@ -202,14 +198,14 @@ function renderFullMonth() {
 }
 
 // ============================================
-// TODAY VIEW - NOW AFTER TABLE
+// TODAY VIEW
 // ============================================
 function renderTodayView() {
     const container = document.getElementById('todayShiftSummary');
     const todayIndex = getTodayIndex();
     
     if (todayIndex === -1 || !rosterData || !rosterData.employees) {
-        container.innerHTML = `<p style="color:rgba(255,255,255,0.8); text-align:center; padding:20px;">
+        container.innerHTML = `<p style="color:rgba(255,255,255,0.8); text-align:center; padding:16px; font-size:13px;">
             📋 No shift data available for today
         </p>`;
         return;
@@ -231,7 +227,7 @@ function renderTodayView() {
     const hasData = Object.values(groups).some(arr => arr.length > 0);
 
     if (!hasData) {
-        container.innerHTML = `<p style="color:rgba(255,255,255,0.8); text-align:center; padding:20px;">
+        container.innerHTML = `<p style="color:rgba(255,255,255,0.8); text-align:center; padding:16px; font-size:13px;">
             📋 No shifts assigned for today
         </p>`;
         return;
@@ -285,6 +281,14 @@ function renderTodayView() {
     container.innerHTML = html;
 }
 
+function getShiftIcon(shift) {
+    const icons = {
+        'A': '🌅', 'B': '☀️', 'C': '🌙',
+        'GEN': '🟢', 'MID': '🌗', 'WO': '📅', 'LV': '🏖️'
+    };
+    return icons[shift] || '📌';
+}
+
 // ============================================
 // SEARCH EMPLOYEE
 // ============================================
@@ -313,7 +317,7 @@ function searchEmployee() {
     }
 
     if (!found) {
-        resultsContainer.innerHTML = `<p style="color:#666;">No employee found matching "${query}"</p>`;
+        resultsContainer.innerHTML = `<p style="color:#666; font-size:13px; text-align:center; padding:10px;">No employee found matching "${query}"</p>`;
         resultsContainer.style.display = 'block';
         return;
     }
@@ -352,7 +356,7 @@ function searchEmployee() {
     html += '</div>';
     
     if (todayShift && todayShift !== '-') {
-        html += `<p style="margin-top:12px; padding:8px 12px; background:#fef3c7; border-radius:8px;">
+        html += `<p style="margin-top:10px; padding:6px 12px; background:#fef3c7; border-radius:8px; font-size:13px;">
             ✅ <strong>Today's Shift:</strong> ${getShiftIcon(todayShift)} ${SHIFT_NAMES[todayShift] || todayShift} 
             (${SHIFT_TIMES[todayShift] || ''})
         </p>`;
@@ -360,14 +364,6 @@ function searchEmployee() {
 
     resultsContainer.innerHTML = html;
     resultsContainer.style.display = 'block';
-}
-
-function getShiftIcon(shift) {
-    const icons = {
-        'A': '🌅', 'B': '☀️', 'C': '🌙',
-        'GEN': '🟢', 'MID': '🌗', 'WO': '📅', 'LV': '🏖️'
-    };
-    return icons[shift] || '📌';
 }
 
 function clearSearch() {
@@ -388,7 +384,7 @@ function showUpdateInstructions() {
             <div class="help-modal-content">
                 <h2>📤 How to Update Roster</h2>
                 <ol>
-                    <li>Go to <strong>Converter Tool</strong> (click "🔄 Update Roster")</li>
+                    <li>Go to <strong>Converter Tool</strong> (click "🔄 Update")</li>
                     <li>Upload your Excel file</li>
                     <li>Download <code>roster.json</code></li>
                     <li>Go to GitHub: <code>data/roster.json</code></li>
@@ -396,7 +392,7 @@ function showUpdateInstructions() {
                     <li>Commit changes</li>
                     <li>Done! Everyone sees the new roster</li>
                 </ol>
-                <p style="margin-top:12px; color:#666; font-size:14px;">
+                <p style="margin-top:10px; color:#666; font-size:12px;">
                     ⚠️ Only the repository owner can update the data.
                 </p>
                 <button onclick="closeHelpModal()" class="close-btn">Got it! ✅</button>
@@ -414,7 +410,6 @@ function closeHelpModal() {
     }
 }
 
-// Close modal when clicking outside
 document.addEventListener('click', function(e) {
     const modal = document.getElementById('helpModal');
     if (modal && modal.classList.contains('active') && e.target === modal) {
