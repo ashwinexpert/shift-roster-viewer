@@ -13,21 +13,13 @@
             <span id="monthDisplay" class="month-badge">August 2026</span>
         </header>
 
-        <!-- Admin Controls (Only visible to you) -->
-        <div class="admin-controls">
-            <button onclick="window.open('converter.html', '_blank')" class="btn btn-converter">
-                🔄 Update Roster
-            </button>
-            <button onclick="showUpdateInstructions()" class="btn btn-help">
-                📤 Upload to GitHub
-            </button>
-        </div>
-
-        <div id="statusMessage" class="status-message"></div>
-
         <!-- Today's View -->
         <section class="today-section">
-            <h2>📍 <span id="todayDate">Today</span></h2>
+            <div class="today-header">
+                <span class="today-icon">📍</span>
+                <span class="today-label">TODAY</span>
+                <span id="todayDate" class="today-date">09/08/2026 (Sunday)</span>
+            </div>
             <div id="todayShiftSummary" class="shift-summary">
                 <p style="color:rgba(255,255,255,0.8); text-align:center; padding:20px;">
                     Loading roster...
@@ -66,8 +58,18 @@
             <span class="legend-item"><span class="dot" style="background:#E74C3C;"></span> LV (Leave)</span>
         </div>
 
+        <!-- Admin Controls (Moved to bottom) -->
+        <div class="admin-controls">
+            <button onclick="window.open('converter.html', '_blank')" class="btn btn-converter">
+                🔄 Update Roster
+            </button>
+            <button onclick="showUpdateInstructions()" class="btn btn-help">
+                📤 Upload to GitHub
+            </button>
+        </div>
+
         <footer>
-            <small>📅 Updated: <span id="lastUpdated">Today</span> | Data stored on GitHub</small>
+            <small>📅 Updated: <span id="lastUpdated">Today</span> · Data stored on GitHub</small>
         </footer>
     </div>
 
