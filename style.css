@@ -7,16 +7,16 @@
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     background: #f0f2f5;
-    padding: 16px;
-    padding-bottom: 40px;
+    padding: 10px;
+    padding-bottom: 30px;
 }
 
 .container {
     max-width: 800px;
     margin: 0 auto;
     background: white;
-    border-radius: 16px;
-    padding: 20px;
+    border-radius: 14px;
+    padding: 14px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 }
 
@@ -24,44 +24,62 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
 }
 
 h1 {
-    font-size: 24px;
+    font-size: 20px;
     color: #1a1a2e;
 }
 
 .month-badge {
     background: #667eea;
     color: white;
-    padding: 4px 14px;
-    border-radius: 20px;
-    font-size: 14px;
+    padding: 3px 12px;
+    border-radius: 16px;
+    font-size: 12px;
     font-weight: 600;
 }
 
-/* Full Month Table - NOW FIRST */
-.full-month-section h2 {
-    font-size: 18px;
-    color: #1a1a2e;
-    margin-bottom: 12px;
+/* Table Header */
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
+.table-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.table-subtitle {
+    font-size: 12px;
+    color: #667eea;
+    font-weight: 600;
+    background: #f0f2f5;
+    padding: 2px 12px;
+    border-radius: 12px;
+}
+
+/* Full Month Table - COMPACT */
 .table-container {
     overflow-x: auto;
-    border-radius: 12px;
+    border-radius: 10px;
     border: 1px solid #e2e8f0;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
+    -webkit-overflow-scrolling: touch;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
-    min-width: 600px;
+    font-size: 11px;
+    min-width: 500px;
 }
 
 thead {
@@ -70,15 +88,15 @@ thead {
 }
 
 thead th {
-    padding: 10px 6px;
+    padding: 6px 3px;
     text-align: center;
     font-weight: 700;
-    font-size: 13px;
+    font-size: 10px;
     white-space: nowrap;
     position: sticky;
     top: 0;
     z-index: 5;
-    border-right: 1px solid rgba(255,255,255,0.15);
+    border-right: 1px solid rgba(255,255,255,0.12);
 }
 
 thead th:last-child {
@@ -90,9 +108,9 @@ thead th:first-child {
     left: 0;
     z-index: 10;
     background: #667eea;
-    min-width: 120px;
+    min-width: 85px;
     text-align: left;
-    padding-left: 14px;
+    padding-left: 10px;
 }
 
 tbody tr {
@@ -112,7 +130,7 @@ tbody tr:hover {
 }
 
 tbody td {
-    padding: 8px 4px;
+    padding: 5px 2px;
     text-align: center;
     border-bottom: 1px solid #f0f2f5;
     border-right: 1px solid #f0f2f5;
@@ -129,10 +147,10 @@ tbody td:first-child {
     left: 0;
     background: inherit;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 10px;
     text-align: left;
-    padding-left: 14px;
-    min-width: 120px;
+    padding-left: 10px;
+    min-width: 85px;
     z-index: 2;
     border-right: 2px solid #e2e8f0;
 }
@@ -143,12 +161,12 @@ tbody tr:hover td:first-child {
 
 tbody td .shift-cell {
     display: inline-block;
-    padding: 3px 10px;
-    border-radius: 12px;
+    padding: 2px 6px;
+    border-radius: 8px;
     font-weight: 700;
-    font-size: 12px;
-    min-width: 32px;
-    letter-spacing: 0.5px;
+    font-size: 9px;
+    min-width: 24px;
+    letter-spacing: 0.3px;
 }
 
 .shift-cell.A { background: #FF6B35; color: white; }
@@ -162,24 +180,25 @@ tbody td .shift-cell {
 /* Today highlight in table */
 tbody td .shift-cell.today-highlight {
     border: 2px solid #FFD700;
-    box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.35);
     transform: scale(1.05);
 }
 
-/* Search Section */
+/* Search Section - COMPACT */
 .search-section {
     display: flex;
-    gap: 10px;
-    margin-bottom: 16px;
+    gap: 6px;
+    margin-bottom: 12px;
 }
 
 #searchInput {
     flex: 1;
-    padding: 12px 16px;
+    padding: 8px 12px;
     border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 16px;
+    border-radius: 8px;
+    font-size: 13px;
     transition: border-color 0.2s;
+    min-width: 100px;
 }
 
 #searchInput:focus {
@@ -187,25 +206,54 @@ tbody td .shift-cell.today-highlight {
     border-color: #667eea;
 }
 
+.btn {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.btn:active {
+    transform: scale(0.95);
+}
+
+.btn-search {
+    background: #667eea;
+    color: white;
+    padding: 8px 16px;
+}
+
+.btn-clear {
+    background: #e74c3c;
+    color: white;
+    padding: 8px 12px;
+}
+
 /* Search Results */
 .search-results {
     background: #f8f9fa;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 16px;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
     border: 2px solid #667eea;
 }
 
 .search-results h3 {
     color: #1a1a2e;
-    margin-bottom: 10px;
+    font-size: 14px;
+    margin-bottom: 8px;
 }
 
 .search-results .employee-month {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 4px 12px;
-    font-size: 14px;
+    gap: 3px 10px;
+    font-size: 12px;
     align-items: center;
 }
 
@@ -216,12 +264,12 @@ tbody td .shift-cell.today-highlight {
 
 .search-results .shift-badge {
     display: inline-block;
-    padding: 2px 10px;
-    border-radius: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
     font-weight: 600;
-    font-size: 12px;
+    font-size: 10px;
     text-align: center;
-    min-width: 40px;
+    min-width: 32px;
 }
 
 .shift-badge.A { background: #FF6B35; color: white; }
@@ -232,64 +280,62 @@ tbody td .shift-cell.today-highlight {
 .shift-badge.WO { background: #95A5A6; color: white; }
 .shift-badge.LV { background: #E74C3C; color: white; }
 
-/* TODAY View - NOW AFTER TABLE */
+/* TODAY View */
 .today-section {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 16px;
-    padding: 20px;
-    margin-top: 16px;
-    margin-bottom: 16px;
+    border-radius: 12px;
+    padding: 14px;
+    margin-top: 12px;
+    margin-bottom: 12px;
     color: white;
 }
 
 .today-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 14px;
+    gap: 8px;
+    margin-bottom: 10px;
     flex-wrap: wrap;
 }
 
 .today-icon {
-    font-size: 20px;
+    font-size: 16px;
 }
 
 .today-label {
     font-weight: 700;
-    font-size: 14px;
-    letter-spacing: 2px;
+    font-size: 12px;
+    letter-spacing: 1.5px;
     opacity: 0.8;
 }
 
 .today-date {
     font-weight: 600;
-    font-size: 16px;
+    font-size: 13px;
     margin-left: auto;
     background: rgba(255,255,255,0.15);
-    padding: 4px 14px;
-    border-radius: 20px;
+    padding: 3px 12px;
+    border-radius: 16px;
 }
 
 .shift-summary {
     background: rgba(255,255,255,0.1);
-    border-radius: 12px;
+    border-radius: 10px;
     padding: 4px;
 }
 
 .shift-group {
-    margin-bottom: 6px;
-    padding: 10px 14px;
-    border-radius: 10px;
+    margin-bottom: 4px;
+    padding: 8px 12px;
+    border-radius: 8px;
     background: rgba(255,255,255,0.06);
-    border-left: 4px solid transparent;
-    transition: background 0.2s;
+    border-left: 3px solid transparent;
 }
 
 .shift-group:last-child {
     margin-bottom: 0;
 }
 
-/* Different border colors for each shift */
 .shift-group[data-shift="A"] { border-left-color: #FF6B35; }
 .shift-group[data-shift="B"] { border-left-color: #F7931E; }
 .shift-group[data-shift="C"] { border-left-color: #2C3E50; }
@@ -301,169 +347,140 @@ tbody td .shift-cell.today-highlight {
     justify-content: space-between;
     align-items: center;
     font-weight: 700;
-    font-size: 15px;
-    margin-bottom: 6px;
-    letter-spacing: 0.3px;
+    font-size: 13px;
+    margin-bottom: 4px;
 }
 
 .shift-group-header .shift-time {
     font-weight: 400;
-    font-size: 12px;
+    font-size: 10px;
     opacity: 0.7;
     background: rgba(255,255,255,0.1);
-    padding: 2px 12px;
-    border-radius: 12px;
+    padding: 1px 10px;
+    border-radius: 10px;
 }
 
 .shift-group .names {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 5px;
     margin-top: 2px;
 }
 
 .shift-group .name-tag {
     background: rgba(255,255,255,0.15);
-    padding: 4px 14px;
-    border-radius: 16px;
-    font-size: 14px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
     font-weight: 500;
-    letter-spacing: 0.2px;
 }
 
 .shift-group .empty {
     color: rgba(255,255,255,0.5);
-    font-size: 13px;
+    font-size: 12px;
     font-style: italic;
     padding: 2px 0;
 }
 
 /* Not Available */
 .not-available {
-    margin-top: 10px;
-    padding-top: 10px;
+    margin-top: 8px;
+    padding-top: 8px;
     border-top: 1px solid rgba(255,255,255,0.15);
 }
 
 .not-available > strong {
-    font-size: 14px;
+    font-size: 12px;
     opacity: 0.9;
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .not-available .na-group {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 6px;
-    margin-top: 4px;
-    padding: 4px 0;
+    gap: 4px;
+    margin-top: 3px;
+    padding: 3px 0;
 }
 
 .not-available .na-group > span {
-    font-size: 13px;
+    font-size: 11px;
     opacity: 0.8;
-    min-width: 70px;
+    min-width: 60px;
 }
 
 .not-available .na-tag {
     background: rgba(255,255,255,0.12);
-    padding: 3px 12px;
-    border-radius: 14px;
-    font-size: 13px;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
 }
 
 .na-tag.wo { background: rgba(149, 165, 166, 0.35); }
 .na-tag.lv { background: rgba(231, 76, 60, 0.35); }
 
-/* Legend */
+/* Legend - COMPACT */
 .legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px 16px;
-    padding: 16px 0;
+    gap: 4px 10px;
+    padding: 10px 0;
     border-top: 1px solid #e2e8f0;
-    margin-top: 16px;
+    margin-top: 10px;
 }
 
 .legend-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 12px;
+    gap: 4px;
+    font-size: 10px;
     color: #555;
 }
 
 .dot {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     display: inline-block;
 }
 
-/* Admin Controls - At Bottom */
+/* Admin Controls - COMPACT */
 .admin-controls {
     display: flex;
-    gap: 10px;
-    margin-top: 16px;
-    padding-top: 16px;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
     border-top: 1px solid #e2e8f0;
     flex-wrap: wrap;
-}
-
-.btn {
-    padding: 10px 18px;
-    border: none;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-    flex: 1;
-    min-width: 80px;
-    text-align: center;
-}
-
-.btn:active {
-    transform: scale(0.95);
 }
 
 .btn-converter {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     flex: 1;
-    min-width: 120px;
+    min-width: 80px;
+    padding: 8px 12px;
+    font-size: 11px;
 }
 
 .btn-help {
     background: #27ae60;
     color: white;
     flex: 1;
-    min-width: 120px;
-}
-
-.btn-search {
-    background: #667eea;
-    color: white;
-    flex: 0 0 auto;
-    padding: 10px 24px;
-}
-
-.btn-clear {
-    background: #e74c3c;
-    color: white;
-    flex: 0 0 auto;
-    padding: 10px 16px;
+    min-width: 80px;
+    padding: 8px 12px;
+    font-size: 11px;
 }
 
 /* Status Message */
 .status-message {
-    padding: 10px 14px;
+    padding: 8px 12px;
     border-radius: 8px;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
     display: none;
-    font-size: 14px;
+    font-size: 12px;
 }
 
 .status-message.success {
@@ -483,8 +500,8 @@ tbody td .shift-cell.today-highlight {
 footer {
     text-align: center;
     color: #999;
-    font-size: 12px;
-    padding-top: 12px;
+    font-size: 10px;
+    padding-top: 8px;
     margin-top: 4px;
 }
 
@@ -500,7 +517,7 @@ footer {
     z-index: 1000;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 16px;
 }
 
 .help-modal.active {
@@ -509,58 +526,70 @@ footer {
 
 .help-modal-content {
     background: white;
-    max-width: 500px;
-    padding: 30px;
-    border-radius: 16px;
+    max-width: 400px;
+    padding: 24px;
+    border-radius: 14px;
     max-height: 80vh;
     overflow-y: auto;
 }
 
 .help-modal-content h2 {
     color: #1a1a2e;
-    margin-bottom: 16px;
+    font-size: 18px;
+    margin-bottom: 12px;
 }
 
 .help-modal-content ol {
-    padding-left: 20px;
+    padding-left: 18px;
     line-height: 1.8;
     color: #333;
+    font-size: 13px;
 }
 
 .help-modal-content code {
     background: #f0f2f5;
-    padding: 2px 8px;
+    padding: 1px 6px;
     border-radius: 4px;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .help-modal .close-btn {
     background: #e74c3c;
     color: white;
     border: none;
-    padding: 10px 24px;
+    padding: 10px 20px;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
-    margin-top: 16px;
+    margin-top: 12px;
     width: 100%;
+    font-size: 14px;
 }
 
 /* Responsive */
 @media (max-width: 600px) {
-    body { padding: 8px; }
-    .container { padding: 12px; }
-    h1 { font-size: 20px; }
-    .btn { font-size: 12px; padding: 8px 12px; }
-    .shift-group-header { font-size: 13px; }
-    .shift-group .name-tag { font-size: 12px; }
-    table { font-size: 11px; min-width: 400px; }
-    th, td { padding: 4px 3px; }
-    th:first-child, td:first-child { min-width: 70px; font-size: 11px; }
-    .shift-cell { font-size: 10px; padding: 1px 4px; min-width: 24px; }
-    .legend-item { font-size: 11px; }
-    .admin-controls { flex-direction: column; }
-    .btn-converter, .btn-help { min-width: unset; }
-    .today-header { flex-wrap: wrap; }
-    .today-date { margin-left: 0; font-size: 14px; }
+    body { padding: 6px; }
+    .container { padding: 10px; border-radius: 10px; }
+    h1 { font-size: 17px; }
+    .month-badge { font-size: 10px; padding: 2px 10px; }
+    .table-title { font-size: 14px; }
+    .table-subtitle { font-size: 10px; }
+    .today-date { font-size: 11px; padding: 2px 10px; }
+    .btn { font-size: 11px; padding: 6px 10px; }
+    .legend-item { font-size: 9px; }
+    .admin-controls { flex-direction: row; }
+    .btn-converter, .btn-help { min-width: 60px; font-size: 10px; }
+}
+
+@media (max-width: 400px) {
+    table { font-size: 9px; min-width: 400px; }
+    thead th { font-size: 8px; padding: 4px 2px; }
+    thead th:first-child { min-width: 60px; font-size: 8px; padding-left: 6px; }
+    tbody td { padding: 3px 2px; }
+    tbody td:first-child { min-width: 60px; font-size: 8px; padding-left: 6px; }
+    tbody td .shift-cell { font-size: 7px; padding: 1px 4px; min-width: 18px; }
+    .search-section { gap: 4px; }
+    #searchInput { font-size: 11px; padding: 6px 10px; }
+    .btn-search { padding: 6px 10px; font-size: 10px; }
+    .btn-clear { padding: 6px 8px; font-size: 10px; }
 }
