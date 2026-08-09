@@ -39,13 +39,12 @@ let rosterData = null;
 document.addEventListener('DOMContentLoaded', function() {
     loadFromGitHub();
     
-    document.getElementById('fileInput').addEventListener('change', handleFileUpload);
-    document.getElementById('importInput').addEventListener('change', handleImport);
     document.getElementById('searchInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') searchEmployee();
     });
 
     updateTodayDate();
+    updateLastUpdated();
 });
 
 // ============================================
@@ -79,112 +78,8 @@ function loadFromGitHub() {
         })
         .catch(error => {
             console.log('❌ No roster.json found');
-            showStatus('📤 Upload a roster to get started', 'success');
+            showStatus('📤 No roster data found. Use "Update Roster" to upload.', 'error');
         });
-}
-
-// ============================================
-// FILE UPLOAD
-// ============================================
-function handleFileUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-
-            processExcelData(jsonData);
-            showStatus(`✅ Successfully loaded: ${file.name}`, 'success');
-        } catch (error) {
-            console.error(error);
-            showStatus('❌ Error reading file. Please check the format.', 'error');
-        }
-    };
-    reader.readAsArrayBuffer(file);
-    event.target.value = '';
-}
-
-// ============================================
-// PROCESS EXCEL DATA
-// ============================================
-function processExcelData(rows) {
-    let dates = [];
-    
-    for (let i = 0; i < Math.min(rows.length, 15); i++) {
-        const row = rows[i];
-        if (!row) continue;
-        let dateCount = 0;
-        let dateCandidates = [];
-        for (let j = 1; j < row.length && j < 35; j++) {
-            const cell = String(row[j] || '');
-            if (cell.match(/\d{2}[-/]\d{2}[-/]\d{4}/)) {
-                dateCount++;
-                dateCandidates.push(cell.trim());
-            }
-        }
-        if (dateCount > 10) {
-            dates = dateCandidates;
-            break;
-        }
-    }
-
-    const employeeData = {};
-
-    for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        if (!row || row.length === 0) continue;
-        const firstCell = String(row[0] || '').trim();
-        if (!firstCell) continue;
-
-        let matchedName = null;
-        for (const emp of EMPLOYEES) {
-            const empClean = emp.replace('1', '').trim();
-            const firstName = emp.split('.')[0].replace('1', '').trim();
-            if (firstCell.includes(empClean) || firstCell.includes(firstName)) {
-                matchedName = emp;
-                break;
-            }
-        }
-
-        if (matchedName) {
-            const shifts = [];
-            for (let j = 1; j < row.length && j <= dates.length + 1; j++) {
-                const cell = String(row[j] || '').trim().toUpperCase();
-                shifts.push(cell || '');
-            }
-            while (shifts.length < dates.length) shifts.push('');
-            employeeData[matchedName] = shifts.slice(0, dates.length);
-        }
-    }
-
-    if (Object.keys(employeeData).length > 0 && dates.length > 0) {
-        const firstDate = dates[0];
-        const dateParts = firstDate.split('-');
-        let monthDisplay = 'Unknown';
-        if (dateParts.length === 3) {
-            const month = parseInt(dateParts[1]);
-            const year = parseInt(dateParts[2]);
-            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-            monthDisplay = monthNames[month - 1] + ' ' + year;
-        }
-        
-        rosterData = {
-            dates: dates,
-            employees: employeeData,
-            month: monthDisplay
-        };
-        
-        localStorage.setItem('rosterData', JSON.stringify(rosterData));
-        renderAll();
-        showStatus('✅ Roster loaded successfully!', 'success');
-    } else {
-        showStatus('❌ Could not parse the roster.', 'error');
-    }
 }
 
 // ============================================
@@ -206,6 +101,16 @@ function updateTodayDate() {
     });
     const dayStr = now.toLocaleDateString('en-IN', { weekday: 'long' });
     document.getElementById('todayDate').textContent = `${dateStr} (${dayStr})`;
+}
+
+function updateLastUpdated() {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-IN', { 
+        day: '2-digit', 
+        month: 'short', 
+        year: 'numeric' 
+    });
+    document.getElementById('lastUpdated').textContent = dateStr;
 }
 
 function updateMonthDisplay() {
@@ -307,7 +212,7 @@ function getShiftIcon(shift) {
 }
 
 // ============================================
-// FULL MONTH VIEW - FIXED DATE PARSING
+// FULL MONTH VIEW
 // ============================================
 function renderFullMonth() {
     const container = document.getElementById('fullMonthTable');
@@ -329,7 +234,6 @@ function renderFullMonth() {
             const day = parseInt(parts[0]);
             html += `<th>${day}</th>`;
         } else {
-            // Fallback
             html += `<th>${i + 1}</th>`;
         }
     }
@@ -356,7 +260,7 @@ function renderFullMonth() {
 }
 
 // ============================================
-// SEARCH EMPLOYEE - FIXED DATE PARSING
+// SEARCH EMPLOYEE
 // ============================================
 function searchEmployee() {
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
@@ -368,7 +272,7 @@ function searchEmployee() {
     }
 
     if (!rosterData || !rosterData.employees) {
-        showStatus('❌ Please upload a roster first', 'error');
+        showStatus('❌ No roster data found. Use "Update Roster" to upload.', 'error');
         return;
     }
 
@@ -396,7 +300,6 @@ function searchEmployee() {
     html += `<div class="employee-month">`;
     
     for (let i = 0; i < dates.length && i < 31; i++) {
-        // Parse date manually: "01-08-2026" -> day=1
         const parts = dates[i].split('-');
         let dateStr;
         if (parts.length === 3) {
@@ -439,61 +342,55 @@ function clearSearch() {
 }
 
 // ============================================
-// EXPORT / IMPORT
+// HELP / INSTRUCTIONS
 // ============================================
-function exportData() {
-    if (!rosterData) {
-        showStatus('❌ No data to export', 'error');
-        return;
+function showUpdateInstructions() {
+    let modal = document.getElementById('helpModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'helpModal';
+        modal.className = 'help-modal';
+        modal.innerHTML = `
+            <div class="help-modal-content">
+                <h2>📤 How to Update Roster</h2>
+                <ol>
+                    <li>Go to <strong>Converter Tool</strong> (click "🔄 Update Roster")</li>
+                    <li>Upload your Excel file</li>
+                    <li>Download <code>roster.json</code></li>
+                    <li>Go to GitHub: <code>data/roster.json</code></li>
+                    <li>Click edit (✏️), paste new data</li>
+                    <li>Commit changes</li>
+                    <li>Done! Everyone sees the new roster</li>
+                </ol>
+                <p style="margin-top:12px; color:#666; font-size:14px;">
+                    ⚠️ Only the repository owner can update the data.
+                </p>
+                <button onclick="closeHelpModal()" class="close-btn">Got it! ✅</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
     }
-
-    const dataStr = JSON.stringify(rosterData, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `roster_backup_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showStatus('✅ Data exported successfully!', 'success');
+    modal.classList.add('active');
 }
 
-function handleImport(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const data = JSON.parse(e.target.result);
-            if (data.dates && data.employees) {
-                rosterData = data;
-                if (data.dates && data.dates.length > 0) {
-                    const firstDate = data.dates[0];
-                    const dateParts = firstDate.split('-');
-                    if (dateParts.length === 3) {
-                        const month = parseInt(dateParts[1]);
-                        const year = parseInt(dateParts[2]);
-                        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-                        rosterData.month = monthNames[month - 1] + ' ' + year;
-                    }
-                }
-                localStorage.setItem('rosterData', JSON.stringify(rosterData));
-                renderAll();
-                showStatus('✅ Data imported successfully!', 'success');
-            } else {
-                showStatus('❌ Invalid data format.', 'error');
-            }
-        } catch (error) {
-            showStatus('❌ Error reading file.', 'error');
-        }
-    };
-    reader.readAsText(file);
-    event.target.value = '';
+function closeHelpModal() {
+    const modal = document.getElementById('helpModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
 }
 
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('helpModal');
+    if (modal && modal.classList.contains('active') && e.target === modal) {
+        closeHelpModal();
+    }
+});
+
+// ============================================
+// UTILITY
+// ============================================
 function showStatus(message, type) {
     const el = document.getElementById('statusMessage');
     el.textContent = message;
