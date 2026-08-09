@@ -13,16 +13,12 @@
             <span id="monthDisplay" class="month-badge">August 2026</span>
         </header>
 
-        <!-- Today's View -->
-        <section class="today-section">
-            <div class="today-header">
-                <span class="today-icon">📍</span>
-                <span class="today-label">TODAY</span>
-                <span id="todayDate" class="today-date">09/08/2026 (Sunday)</span>
-            </div>
-            <div id="todayShiftSummary" class="shift-summary">
-                <p style="color:rgba(255,255,255,0.8); text-align:center; padding:20px;">
-                    Loading roster...
+        <!-- Full Month View - NOW FIRST -->
+        <section class="full-month-section">
+            <h2>📊 Full Month Roster</h2>
+            <div id="fullMonthTable" class="table-container">
+                <p style="color:#666; text-align:center; padding:20px;">
+                    Loading...
                 </p>
             </div>
         </section>
@@ -37,12 +33,16 @@
         <!-- Search Results -->
         <div id="searchResults" style="display:none;" class="search-results"></div>
 
-        <!-- Full Month View -->
-        <section class="full-month-section">
-            <h2>📊 Full Month Roster</h2>
-            <div id="fullMonthTable" class="table-container">
-                <p style="color:#666; text-align:center; padding:20px;">
-                    Loading...
+        <!-- TODAY View - NOW AFTER TABLE -->
+        <section class="today-section">
+            <div class="today-header">
+                <span class="today-icon">📍</span>
+                <span class="today-label">TODAY</span>
+                <span id="todayDate" class="today-date">09/08/2026 (Sunday)</span>
+            </div>
+            <div id="todayShiftSummary" class="shift-summary">
+                <p style="color:rgba(255,255,255,0.8); text-align:center; padding:20px;">
+                    Loading roster...
                 </p>
             </div>
         </section>
@@ -58,7 +58,7 @@
             <span class="legend-item"><span class="dot" style="background:#E74C3C;"></span> LV (Leave)</span>
         </div>
 
-        <!-- Admin Controls (Moved to bottom) -->
+        <!-- Admin Controls - At Bottom -->
         <div class="admin-controls">
             <button onclick="window.open('converter.html', '_blank')" class="btn btn-converter">
                 🔄 Update Roster
